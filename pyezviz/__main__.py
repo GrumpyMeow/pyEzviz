@@ -3,9 +3,11 @@ import sys
 import json
 import logging
 import pandas
+from http.client import HTTPConnection
 
 
 from pyezviz import EzvizClient, EzvizCamera
+from pyezviz.DeviceSwitchType import DeviceSwitchType
 
 
 def main():
@@ -29,15 +31,14 @@ def main():
     subparsers_camera = parser_camera.add_subparsers(dest='camera_action')
 
     parser_camera_status = subparsers_camera.add_parser('status', help='Get the status of the camera')
-    # parser_camera_status.add_argument('--status', required=True, help='Status to status', choices=['device','camera','switch','connection','wifi','status'])
-
+    
     parser_camera_move = subparsers_camera.add_parser('move', help='Move the camera')
     parser_camera_move.add_argument('--direction', required=True, help='Direction to move the camera to', choices=['up','down','right','left'])
     parser_camera_move.add_argument('--speed', required=False, help='Speed of the movement', default=5, type=int, choices=range(1, 10))
 
 
     parser_camera_switch = subparsers_camera.add_parser('switch', help='Change the status of a switch')
-    parser_camera_switch.add_argument('--switch', required=True, help='Switch to switch', choices=['audio','ir','state','privacy','follow_move'])
+    parser_camera_switch.add_argument('--switch', required=True, help='Switch to switch', type=DeviceSwitchType.argparse , choices=list(DeviceSwitchType), default=None )
     parser_camera_switch.add_argument('--enable', required=False, help='Enable (or not)', default=1, type=int, choices=[0,1] )
 
     parser_camera_alarm = subparsers_camera.add_parser('alarm', help='Configure the camera alarm')
@@ -48,22 +49,20 @@ def main():
 
     args = parser.parse_args()
 
-    # print("--------------args")
-    # print("--------------args: %s",args)
-    # print("--------------args")
-
     client = EzvizClient(args.username, args.password)
 
     if args.debug:
 
-        import http.client
-        http.client.HTTPConnection.debuglevel = 5
-        # You must initialize logging, otherwise you'll not see debug output.
-        logging.basicConfig()
-        logging.getLogger().setLevel(logging.DEBUG)
-        requests_log = logging.getLogger("requests.packages.urllib3")
-        requests_log.setLevel(logging.DEBUG)
-        requests_log.propagate = True
+        log = logging.getLogger('urllib3')
+        log.setLevel(level=logging.DEBUG)
+
+        # logging from urllib3 to console
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.DEBUG)
+        log.addHandler(ch)
+
+        HTTPConnection.debuglevel = 1
+
 
 
     if args.action == 'devices':
@@ -131,17 +130,6 @@ def main():
             print(exp)
             return 1
 
-        # if args.camera_action == 'list':
-        #     try:
-        #         pagelist = client.get_PAGE_LIST()
-        #         df = pandas.DataFrame(pagelist['statusInfos'])
-        #         df
-
-        #     except BaseException as exp:
-        #         print(exp)
-        #         return 1
-        #     finally:
-        #         client.close_session()
 
         if args.camera_action == 'move':
             try:
@@ -154,21 +142,6 @@ def main():
 
         elif args.camera_action == 'status':
             try:
-                # camera.load()
-                # if args.status == 'device':
-                #     print(camera._device)
-                # elif args.status == 'status':
-                #     print(camera._status)
-                # elif args.status == 'switch':
-                #     # print(json.dumps(camera._switch, indent=2))
-                #     print(camera._switch)
-                # elif args.status == 'connection':
-                #     # print(json.dumps(camera._switch, indent=2))
-                #     print(camera._connection)
-                # elif args.status == 'wifi':
-                #     # print(json.dumps(camera._switch, indent=2))
-                #     print(camera._wifi)
-                # print(camera.status())
                 print(json.dumps(camera.status(), indent=2))
 
             except BaseException as exp:
@@ -179,16 +152,7 @@ def main():
 
         elif args.camera_action == 'switch':
             try:
-                if args.switch == 'ir':
-                        camera.switch_device_ir_led(args.enable)
-                elif args.switch == 'state':
-                        camera.switch_device_state_led(args.enable)
-                elif args.switch == 'audio':
-                        camera.switch_device_audio(args.enable)
-                elif args.switch == 'privacy':
-                        camera.switch_privacy_mode(args.enable)
-                elif args.switch == 'follow_move':
-                        camera.switch_follow_move(args.enable)
+                camera.switch( args.switch , args.enable)
             except BaseException as exp:
                 print(exp)
                 return 1

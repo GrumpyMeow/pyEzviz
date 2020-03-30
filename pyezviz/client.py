@@ -6,7 +6,7 @@ import time
 from fake_useragent import UserAgent
 from uuid import uuid4
 from .camera import EzvizCamera
-# from pyezviz.camera import EzvizCamera
+from pyezviz.DeviceSwitchType import DeviceSwitchType
 
 COOKIE_NAME = "sessionId"
 CAMERA_DEVICE_CATEGORY = "IPC"
@@ -148,7 +148,7 @@ class EzvizClient(object):
 
         return json_result
 
-    def _switch_status(self, serial, status_type, enable, max_retries=0):
+    def _switch_status(self, serial, switch_type, enable, max_retries=0, clientType=1, netType='WIFI', channel=0):
         """Switch status on a device"""
 
         try:
@@ -156,23 +156,26 @@ class EzvizClient(object):
                                     data={  'sessionId': self._sessionId, 
                                             'enable': enable,
                                             'serial': serial,
-                                            'channel': '0',
-                                            'netType' : 'WIFI',
-                                            'clientType': '1',
-                                            'type': status_type},
+                                            'channel': channel,
+                                            'netType' : netType,
+                                            'clientType': clientType ,
+                                            'type': switch_type.value},
                                     timeout=self._timeout)
 
 
             if req.status_code == 401:
-            # session is wrong, need to relogin
-                self.login()
+                # session is wrong, need to relogin
                 logging.info("Got 401, relogging (max retries: %s)",str(max_retries))
+                self.login()
                 return self._switch_status(serial, type, enable, max_retries+1)
 
             response_json = req.json()
-            if response_json['resultCode'] and response_json['resultCode'] != '0':
-                raise PyEzvizError("Could not set the switch, maybe a permission issue ?: Got %s : %s)",str(req.status_code), str(req.text))
-                return False
+            if req.status_code==200:
+                if response_json['resultCode'] and response_json['resultCode'] != '0':
+                    raise PyEzvizError("Could not set the switch '{0}'. Unexpected resultcode. (Responsecode={1}, Resultcode={2})".format(switch_type.name, req.status_code, response_json['resultCode']))                
+            else:
+                raise PyEzvizError("Could not set the switch '{0}'. Unexpected response. (Responsecode={1}, Response={2})".format(switch_type.name, req.status_code, response_json))
+
         except OSError as e:
             raise PyEzvizError("Could not access Ezviz' API: " + str(e))
 
@@ -189,7 +192,7 @@ class EzvizClient(object):
         # foreach, launch a switchstatus for the proper serial
         for idx, device in enumerate(devices):
             serial = devices[idx]['serial']
-            self._switch_status(serial, TYPE_PRIVACY_MODE, enable)
+            self._switch_status(serial, DeviceSwitchType.TYPE_PRIVACY_MODE, enable)
 
         return True
 
@@ -315,7 +318,7 @@ class EzvizClient(object):
         # session is wrong, need to re-log-in
             self.login()
             logging.info("Got 401, relogging (max retries: %s)",str(max_retries))
-            return self.detection_sensibility(serial, enable, max_retries+1)
+            return self.detection_sensibility(serial, sensibility, max_retries+1)
         
         return True
 
@@ -339,16 +342,16 @@ class EzvizClient(object):
         # session is wrong, need to re-log-in
             self.login()
             logging.info("Got 401, relogging (max retries: %s)",str(max_retries))
-            return self.get_detection_sensibility(serial, enable, max_retries+1)
+            return self.get_detection_sensibility(serial, max_retries+1)
         # elif req.status_code != 200:
         #     raise PyEzvizError("Could not get detection sensibility: Got %s : %s)",str(req.status_code), str(req.text))
 
         response_json = req.json()
-        if response_json['resultCode'] and response_json['resultCode'] != '0':
-            # raise PyEzvizError("Could not get detection sensibility: Got %s : %s)",str(req.status_code), str(req.text))
-            return 'Unknown'
-        else:
+
+        if response_json['algorithmConfig'] and response_json['algorithmConfig']['algorithmList']: 
             return response_json['algorithmConfig']['algorithmList'][0]['value']
+        else:
+            return 'unknown'
 
     def alarm_sound(self, serial, soundType, enable=1, max_retries=0):
         """Enable alarm sound by API."""

@@ -41,15 +41,12 @@ class EzvizCamera(object):
         self._connection = page_list['connectionInfos'][self._serial]
 
         # # load switches
-        switches = {}
+        self._switches = {}
         for switch in  page_list['switchStatusInfos'][self._serial]:
-            switches[switch['type']] = switch
-
-        self._switch = switches
+            self._switches[switch['type']] = switch['enable']
 
         # load detection sensibility
         self._detection_sensibility = self._client.get_detection_sensibility(self._serial)
-
         return True
 
 
@@ -63,11 +60,12 @@ class EzvizCamera(object):
             'status': self._device['status'],
             'device_sub_category': self._device['deviceSubCategory'],
 
-            'privacy': self._switch.get( DeviceSwitchType.SLEEP )['enable'],
-            'audio': self._switch.get( DeviceSwitchType.SOUND )['enable'],
-            'ir_led': self._switch.get( DeviceSwitchType.INFRARED_LIGHT )['enable'],
-            'state_led': self._switch.get(DeviceSwitchType.LIGHT)['enable'],
-            'follow_move': self._switch.get(DeviceSwitchType.MOBILE_TRACKING)['enable'],
+            'privacy': self._switches.get( DeviceSwitchType.SLEEP.value ),
+            'audio': self._switches.get( DeviceSwitchType.SOUND.value ),
+            'ir_led': self._switches.get( DeviceSwitchType.INFRARED_LIGHT.value ),
+            'state_led': self._switches.get(DeviceSwitchType.LIGHT.value),
+            'follow_move': self._switches.get(DeviceSwitchType.MOBILE_TRACKING.value),
+            'outdoor_ringing_sound': self._switches.get(DeviceSwitchType.OUTDOOR_RINGING_SOUND.value),
 
             'alarm_notify': bool(self._status[KEY_ALARM_NOTIFICATION]),
             'alarm_sound_mod': ALARM_SOUND_MODE[int(self._status['alarmSoundMode'])],
@@ -84,7 +82,7 @@ class EzvizCamera(object):
     def move(self, direction, speed=5):
         """Moves the camera."""
         if direction not in ['right','left','down','up']:
-            raise PyEzvizError("Invalid direction: %s ", command)
+            raise PyEzvizError("Invalid direction: %s ", direction)
 
         # launch the start command
         self._client.ptzControl(str(direction).upper(), self._serial, 'START', speed)
@@ -107,23 +105,6 @@ class EzvizCamera(object):
         # we force enable = 1 , to make sound...
         return self._client.detection_sensibility(self._serial, sensibility)
 
-    def switch_device_audio(self, enable=0):
-        """Switch audio status on a device."""
-        return self._client.switch_status(self._serial, DeviceSwitchType.SOUND, enable)
-
-    def switch_device_state_led(self, enable=0):
-        """Switch audio status on a device."""
-        return self._client.switch_status(self._serial, DeviceSwitchType.LIGHT, enable)
-
-    def switch_device_ir_led(self, enable=0):
-        """Switch audio status on a device."""
-        return self._client.switch_status(self._serial, DeviceSwitchType.INFRARED_LIGHT, enable)
-
-    def switch_privacy_mode(self, enable=0):
-        """Switch privacy mode on a device."""
-        return self._client.switch_status(self._serial, DeviceSwitchType.SLEEP, enable)
-
-    def switch_follow_move(self, enable=0):
-        """Switch follow move."""
-        return self._client.switch_status(self._serial, DeviceSwitchType.MOBILE_TRACKING, enable)
-        
+    def switch(self, switch_type, enable=0):
+        """Switch status on a device."""
+        return self._client.switch_status(self._serial, switch_type, enable)
