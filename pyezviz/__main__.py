@@ -208,6 +208,17 @@ def main():
                 return 1
             finally:
                 client.close_session()
+    elif args.action == None:
+            # Default action is equal to: devices connection
+            try:
+                client.login()
+                print(json.dumps(client.get_CONNECTION(), indent=2))
+            except BaseException as exp:
+                print(exp)
+                return 1
+            finally:
+                client.close_session()
+
     else:
         print("Action not implemented: %s", args.action)
 
