@@ -1,6 +1,9 @@
 import time
 import pyezviz.DeviceSwitchType
 from pyezviz.DeviceSwitchType import DeviceSwitchType
+from pyezviz.DeviceMapSupport import DeviceMapSupport
+import json
+
 
 
 KEY_ALARM_NOTIFICATION = 'globalStatus'
@@ -40,10 +43,26 @@ class EzvizCamera(object):
         # load connection infos
         self._connection = page_list['connectionInfos'][self._serial]
 
-        # # load switches
+        # load switches
         self._switches = {}
         for switch in  page_list['switchStatusInfos'][self._serial]:
-            self._switches[switch['type']] = switch['enable']
+            try:
+                switchName = DeviceSwitchType(switch['type']).name
+            except ValueError:
+                switchName = switch['type']
+            self._switches[switchName] = switch['enable']
+
+
+        # load support-map
+        self._support = {}
+        supportExt = json.loads(self._device["supportExt"])
+        for support in supportExt:
+            try:
+                supportName = DeviceMapSupport(int(support)).name
+            except ValueError:
+                supportName = support
+            self._support[supportName] = supportExt[support]
+            
 
         # load detection sensibility
         self._detection_sensibility = self._client.get_detection_sensibility(self._serial)
@@ -59,13 +78,8 @@ class EzvizCamera(object):
             'name': self._device['name'],
             'status': self._device['status'],
             'device_sub_category': self._device['deviceSubCategory'],
-
-            'privacy': self._switches.get( DeviceSwitchType.SLEEP.value ),
-            'audio': self._switches.get( DeviceSwitchType.SOUND.value ),
-            'ir_led': self._switches.get( DeviceSwitchType.INFRARED_LIGHT.value ),
-            'state_led': self._switches.get(DeviceSwitchType.LIGHT.value),
-            'follow_move': self._switches.get(DeviceSwitchType.MOBILE_TRACKING.value),
-            'outdoor_ringing_sound': self._switches.get(DeviceSwitchType.OUTDOOR_RINGING_SOUND.value),
+            'switches' : self._switches,
+            'support': self._support,
 
             'alarm_notify': bool(self._status[KEY_ALARM_NOTIFICATION]),
             'alarm_sound_mod': ALARM_SOUND_MODE[int(self._status['alarmSoundMode'])],
@@ -74,6 +88,8 @@ class EzvizCamera(object):
 
             'local_ip': self._connection['localIp'],
             'local_rtsp_port': self._connection['localRtspPort'],
+            'localCmdPort' : self._connection['localCmdPort'],
+            'localStreamPort' : self._connection['localStreamPort'],
 
             'detection_sensibility': self._detection_sensibility,
         }

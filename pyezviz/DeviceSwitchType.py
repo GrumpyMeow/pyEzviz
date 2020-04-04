@@ -16,6 +16,7 @@ class DeviceSwitchType(enum.IntEnum):
     WIFI_MARKETING = 12
     WIFI_LIGHT = 13
     PLUG = 14
+    # 15
     SLEEP = 21
     SOUND = 22
     BABY_CARE = 23
@@ -29,11 +30,12 @@ class DeviceSwitchType(enum.IntEnum):
     ROAMING_STATUS = 34
     DEVICE_4G_STATUS = 35
     ALARM_REMIND_MODE = 37
+    # 38
     OUTDOOR_RINGING_SOUND = 39
     HUMAN_INTELLIGENT_DETECTION = 200
     RECEIVE_DOORBELL_CONTACT = 201
     FACE_SERVICE = 202
-    UNKNOWN_300 = 300
+    # 300
     ALARM_LIGHT = 301
     HUMAN_FILTER = 302
     SECURITY_LIGHT = 303

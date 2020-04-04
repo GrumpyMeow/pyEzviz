@@ -13,9 +13,7 @@ CAMERA_DEVICE_CATEGORY = "IPC"
 DOORBELL_DEVICE_CATEGORY = "BDoorBell"
 
 
-EU_API_DOMAIN = "apiieu"
-API_BASE_TLD = "ezvizlife.com"
-API_BASE_URI = "https://" + EU_API_DOMAIN + "." + API_BASE_TLD
+API_BASE_URI = "https://api.ezvizlife.com"
 API_ENDPOINT_LOGIN = "/v3/users/login"
 API_ENDPOINT_CLOUDDEVICES = "/api/cloud/v2/cloudDevices/getAll"
 API_ENDPOINT_PAGELIST = "/v3/userdevices/v1/devices/pagelist"
@@ -27,23 +25,9 @@ API_ENDPOINT_DATA_REPORT = "/api/other/data/report"
 API_ENDPOINT_DETECTION_SENSIBILITY = "/api/device/configAlgorithm"
 API_ENDPOINT_DETECTION_SENSIBILITY_GET = "/api/device/queryAlgorithmConfig"
 
-LOGIN_URL = API_BASE_URI + API_ENDPOINT_LOGIN
-CLOUDDEVICES_URL = API_BASE_URI + API_ENDPOINT_CLOUDDEVICES
-DEVICES_URL = API_BASE_URI + API_ENDPOINT_DEVICES
-PAGELIST_URL = API_BASE_URI + API_ENDPOINT_PAGELIST
-DATA_REPORT_URL = API_BASE_URI + API_ENDPOINT_DATA_REPORT
-
-SWITCH_STATUS_URL = API_BASE_URI + API_ENDPOINT_SWITCH_STATUS
-DETECTION_SENSIBILITY_URL = API_BASE_URI + API_ENDPOINT_DETECTION_SENSIBILITY
-DETECTION_SENSIBILITY_GET_URL = API_BASE_URI + API_ENDPOINT_DETECTION_SENSIBILITY_GET
-
-
 
 DEFAULT_TIMEOUT = 10
 MAX_RETRIES = 3
-
-
-
 
 class PyEzvizError(Exception):
     pass
@@ -63,7 +47,7 @@ class EzvizClient(object):
         self._CLOUD = cloud
         self._CONNECTION = connection
 
-    def _login(self, apiDomain=EU_API_DOMAIN):
+    def _login(self):
         """Login to Ezviz' API."""
 
         # Ezviz API sends md5 of password
@@ -73,7 +57,7 @@ class EzvizClient(object):
         payload = {"account": self.account, "password": md5pass, "featureCode": "93c579faa0902cbfcfcc4fc004ef67e7"}
 
         try:
-            req = self._session.post("https://" + apiDomain + "." + API_BASE_TLD + API_ENDPOINT_LOGIN,
+            req = self._session.post(API_BASE_URI + API_ENDPOINT_LOGIN,
                                 data=payload,
                                 headers={"Content-Type": "application/x-www-form-urlencoded",
                                         "clientType": "1",
@@ -90,15 +74,12 @@ class EzvizClient(object):
         try:
             response_json = req.json()
 
-            # if the apidomain is not proper
-            if response_json["meta"]["code"] == 1100: 
-                return self._login(response_json["loginArea"]["apiDomain"])
-
             sessionId = str(response_json["loginSession"]["sessionId"])
             if not sessionId:
                 raise PyEzvizError("Login error: Please check your username/password: %s ", str(req.text))
 
             self._sessionId = sessionId
+            self._api_domain = response_json["loginArea"]["apiDomain"]
 
         except (OSError, json.decoder.JSONDecodeError) as e:
             raise PyEzvizError("Impossible to decode response: \nResponse was: [%s] %s", str(e), str(req.status_code), str(req.text))
@@ -116,7 +97,7 @@ class EzvizClient(object):
             raise PyEzvizError("Trying to call get_pagelist without filter")
 
         try:
-            req = self._session.get(PAGELIST_URL,
+            req = self._session.get("https://" + self._api_domain + API_ENDPOINT_PAGELIST,
                                     params={'filter': filter},
                                     headers={ 'sessionId': self._sessionId},
                                     timeout=self._timeout)
@@ -135,6 +116,7 @@ class EzvizClient(object):
 
         try:
             json_output = req.json()
+
         except (OSError, json.decoder.JSONDecodeError) as e:
             raise PyEzvizError("Impossible to decode response: " + str(e) + "\nResponse was: " + str(req.text))
 
@@ -152,7 +134,7 @@ class EzvizClient(object):
         """Switch status on a device"""
 
         try:
-            req = self._session.post(SWITCH_STATUS_URL,
+            req = self._session.post("https://" + self._api_domain + API_ENDPOINT_SWITCH_STATUS,
                                     data={  'sessionId': self._sessionId, 
                                             'enable': enable,
                                             'serial': serial,
@@ -228,7 +210,7 @@ class EzvizClient(object):
 
 
         try:
-            req = self._session.put(DEVICES_URL + serial + API_ENDPOINT_PTZCONTROL,
+            req = self._session.put("https://" + self._api_domain + API_ENDPOINT_DEVICES + serial + API_ENDPOINT_PTZCONTROL,
                                     data={'command': command,
                                         'action': action,
                                         'channelNo': "1",
@@ -267,7 +249,7 @@ class EzvizClient(object):
         print(f"enable: {enable}, operationType: {operationType}")
 
         try:
-            req = self._session.post(DATA_REPORT_URL,
+            req = self._session.post("https://" + self._api_domain + API_ENDPOINT_DATA_REPORT,
                                     data={  'clientType': '1',
                                             'infoDetail': json.dumps({
                                                 "operationType" : int(operationType),
@@ -303,7 +285,7 @@ class EzvizClient(object):
             raise PyEzvizError("Unproper sensibility (should be within 1 to 6).")
 
         try:
-            req = self._session.post(DETECTION_SENSIBILITY_URL,
+            req = self._session.post("https://" + self._api_domain + API_ENDPOINT_DETECTION_SENSIBILITY,
                                     data={  'subSerial' : serial,
                                             'type': '0',
                                             'sessionId': self._sessionId,
@@ -328,7 +310,7 @@ class EzvizClient(object):
             raise PyEzvizError("Can't gather proper data. Max retries exceeded.")
 
         try:
-            req = self._session.post(DETECTION_SENSIBILITY_GET_URL,
+            req = self._session.post("https://" + self._api_domain + API_ENDPOINT_DETECTION_SENSIBILITY_GET,
                                     data={  'subSerial' : serial,
                                             'sessionId': self._sessionId,
                                             'clientType': 1
@@ -362,7 +344,7 @@ class EzvizClient(object):
             raise PyEzvizError("Invalid soundType, should be 0,1,2: " + str(soundType))
 
         try:
-            req = self._session.put(DEVICES_URL + serial + API_ENDPOINT_ALARM_SOUND,
+            req = self._session.put("https://" + self._api_domain + API_ENDPOINT_DEVICES + serial + API_ENDPOINT_ALARM_SOUND,
                                     data={  'enable': enable,
                                             'soundType': soundType,
                                             'voiceId': '0',
