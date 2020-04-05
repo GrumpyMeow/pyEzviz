@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import sys
 import json
 import logging
@@ -36,6 +37,7 @@ def main():
     parser_camera_move.add_argument('--direction', required=True, help='Direction to move the camera to', choices=['up','down','right','left'])
     parser_camera_move.add_argument('--speed', required=False, help='Speed of the movement', default=5, type=int, choices=range(1, 10))
 
+    parser_camera_move = subparsers_camera.add_parser('stream', help='Start live stream from camera')
 
     parser_camera_switch = subparsers_camera.add_parser('switch', help='Change the status of a switch')
     parser_camera_switch.add_argument('--switch', required=True, help='Switch to switch', type=DeviceSwitchType.argparse , choices=list(DeviceSwitchType), default=None )
@@ -153,6 +155,16 @@ def main():
         elif args.camera_action == 'switch':
             try:
                 camera.switch( args.switch , args.enable)
+            except BaseException as exp:
+                print(exp)
+                return 1
+            finally:
+                client.close_session()
+
+        elif args.camera_action == 'stream':
+            try:
+                camera.load()
+                asyncio.run( camera.stream() )
             except BaseException as exp:
                 print(exp)
                 return 1
