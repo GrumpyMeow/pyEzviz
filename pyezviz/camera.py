@@ -111,6 +111,8 @@ class EzvizCamera(object):
         return True
 
     def pack(self, magic, magic2, message):
+        # magic = message sequence (increments each request)
+        # magic2 = command code ?
         message = message.replace(" ","")
         msgln = (len(message)) // 2
         msgl = msgln.to_bytes(4, byteorder='big').hex()
@@ -134,11 +136,88 @@ class EzvizCamera(object):
                     
          cmdwriter.write(bytearray.fromhex(message))
          await cmdwriter.drain()
-         print('reading3:')
          data = await cmdreader.read(-1)
-         print(f'Received3: {bytes.hex(data)}')
+         print(f'3003 Recv: {bytes.hex(data)}')
          cmdwriter.close()
          await cmdwriter.wait_closed()
+
+
+         cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
+         message = self.pack("03", "00003003", 
+                    "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
+                    "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
+                    "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
+                    "f5 7c df 2e db 32 48 00 f4 e2 fd 17 8c 32 53 ac"
+                    "7f 66 b9 6b 6c 3d 56 35 bf 35 96 24 dd 20 8a 2c"
+                    "53 6b 55 3f 56 f8 92 b7 8f 57 55 89 1e 6a d9 e6"
+                    "ce 30 d1 b3 a3 d3 9a fe cc 11 88 6a de 2f cb 8f")
+                    
+         cmdwriter.write(bytearray.fromhex(message))
+         await cmdwriter.drain()
+         data = await cmdreader.read(-1)
+         print(f'3003-2 Recv : {bytes.hex(data)}')
+         cmdwriter.close()
+         await cmdwriter.wait_closed()
+
+         cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
+         message = self.pack("03", "00003201", 
+                    "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
+                    "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
+                    "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
+                    "f5 7c df 2e db 32 48 00 f4 e2 fd 17 8c 32 53 ac"
+                    "7f 66 b9 6b 6c 3d 56 35 bf 35 96 24 dd 20 8a 2c"
+                    "53 6b 55 3f 56 f8 92 b7 8f 57 55 89 1e 6a d9 e6"
+                    "ce 30 d1 b3 a3 d3 9a fe cc 11 88 6a de 2f cb 8f")
+                    
+         cmdwriter.write(bytearray.fromhex(message))
+         await cmdwriter.drain()
+         data = await cmdreader.read(-1)
+         print(f'3201 Recv: {bytes.hex(data)}')
+         cmdwriter.close()
+         await cmdwriter.wait_closed()
+
+         cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
+         message = self.pack("03", "00003201", 
+                    "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
+                    "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
+                    "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
+                    "f5 7c df 2e db 32 48 00 f4 e2 fd 17 8c 32 53 ac"
+                    "7f 66 b9 6b 6c 3d 56 35 bf 35 96 24 dd 20 8a 2c"
+                    "63 4c 4a 0a 2f b5 a1 6e 6a 2e c7 05 1f 96 36 7a"
+                    "e0 19 e7 ef 01 9a 65 f4 d6 e1 50 e5 bd dd f2 8b"
+                    "44 30 9a bf f8 33 de 05 d1 02 67 67 00 77 3d a7"
+                    "4c 43 95 8e 05 e8 39 56 90 27 6c 44 9d 73 71 c0"
+                    "5e d3 84 13 eb 89 77 73 d8 c9 17 4b c7 15 df 18"
+                    "6b db 05 04 c5 60 fa ca 93 08 06 01 f5 34 24 73")
+         cmdwriter.write(bytearray.fromhex(message))
+         await cmdwriter.drain()
+         data = await cmdreader.read(-1)
+         print(f'3201-2 Recv: {bytes.hex(data)}')
+         #<?xml version="1.0" encoding="utf-8"?><Response><Result>0</Result><Day list="20,21,22,25,26,27,28,2 9,30,31"/></Response>
+         cmdwriter.close()
+         await cmdwriter.wait_closed()
+
+         cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
+         message = self.pack("03", "00003201", 
+                    "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
+                    "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
+                    "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
+                    "f5 7c df 2e db 32 48 00 f4 e2 fd 17 8c 32 53 ac"
+                    "7f 66 b9 6b 6c 3d 56 35 bf 35 96 24 dd 20 8a 2c"
+                    "63 4c 4a 0a 2f b5 a1 6e 6a 2e c7 05 1f 96 36 7a"
+                    "e0 19 e7 ef 01 9a 65 f4 d6 e1 50 e5 bd dd f2 8b"
+                    "44 30 9a bf f8 33 de 05 d1 02 67 67 00 77 3d a7"
+                    "4c 43 95 8e 05 e8 39 56 90 27 6c 44 9d 73 71 c0"
+                    "d5 27 d8 0f a6 31 ec 6f 80 62 32 70 db a2 e6 58"
+                    "97 0c ec a4 8f dd 83 66 ee 49 e4 3b c2 46 95 2f")
+         cmdwriter.write(bytearray.fromhex(message))
+         await cmdwriter.drain()
+         data = await cmdreader.read(-1)
+         print(f'3201-3 Recv: {bytes.hex(data)}')
+         #<?xml version="1.0" encoding="utf-8"?><Response><Result>0</Result><Day list="1,2,3,4,5"/></Response>
+         cmdwriter.close()
+         await cmdwriter.wait_closed()
+
 
          cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
          message = self.pack("04", "00003003", 
@@ -152,7 +231,25 @@ class EzvizCamera(object):
          cmdwriter.write(bytearray.fromhex(message))
          await cmdwriter.drain()
          data = await cmdreader.read(-1)
-         print(f'Received4: {bytes.hex(data)}')
+         print(f'3003 Recv: {bytes.hex(data)}')
+         cmdwriter.close()
+         await cmdwriter.wait_closed()
+
+         cmdreader, cmdwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localCmdPort']))
+         message = self.pack("0b", "00002013", 
+                    "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
+                    "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
+                    "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
+                    "f5 7c df 2e db 32 48 00 f4 e2 fd 17 8c 32 53 ac"
+                    "7f 66 b9 6b 6c 3d 56 35 bf 35 96 24 dd 20 8a 2c"
+                    "21 f2 f2 8b 08 83 23 d3 bd 84 3c 53 ab 73 d9 1d"
+                    "b5 7b 93 71 6c f7 01 67 ef c1 a8 57 cf 03 82 43"
+                    "57 0d 1a 79 a3 4f e4 fc 45 e7 8d 72 26 05 46 f3")
+         cmdwriter.write(bytearray.fromhex(message))
+         await cmdwriter.drain()
+         data = await cmdreader.read(-1)
+         print(f'2013 Recv: {bytes.hex(data)}')
+         # <?xml version="1.0" encoding="utf-8"?><Response><Result>0</Result></Response>
          cmdwriter.close()
          await cmdwriter.wait_closed()
 
@@ -177,36 +274,78 @@ class EzvizCamera(object):
          cmdwriter.write(bytearray.fromhex(message))
          await cmdwriter.drain()
          data = await cmdreader.read(-1)
-         print(f'Received2: {bytes.hex(data)}')
-
+         print(f'2011 Recv: {bytes.hex(data)}')
+         # <?xml version="1.0" encoding="utf-8"?><Response><Result>0</Result><Session>10042</Session><StreamHeader Base64Data="SU1LSAEBAAACAAABASABEIA+AAAAfQAAAAAAAAAAAAAAAAAAAAAAAA==" Base64Length="56"/></Response>
          cmdwriter.close()
          await cmdwriter.wait_closed()
-
 
          stmreader, stmwriter = await asyncio.open_connection(self._connection['localIp'], int(self._connection['localStreamPort']))
          stmmessage = self.pack("07", "00003105", 
             "ba 65 f1 e8 d1 fa a3 db 46 fe 9f 6a ff a2 e3 e1"
             "02 2e 8c ba b7 e7 8c 49 eb 27 1c d4 7a f2 fd e3"
             "10 f1 6c f1 03 1d 44 77 f4 7f d7 00 6c a7 a8 26"
-            # I don't know how to encode the following part. The difference is significant everytime. Maybe sth like hashed sessionid?
+            # I don't know how to encode the following part. The difference is significant everytime. Maybe sth like hashed sessionid or time dependent?
+            # The magic is done in "ezstreamclient" /EZStreamSDKJNA/ IClient.java / createCASClient / generateECDHKey
+            # ezstream_generateECDHKey  zstream_setClientECDHKey
+            # Ezviz uses Entrust certificates (are embedded in APK)
+            # https://en.wikipedia.org/wiki/Elliptic-curve_Diffie%E2%80%93Hellman
             "3f 05 95 09 a7 96 f5 13 e0 f1 6c 69 9b 94 4a 29" 
             "e9 aa 4a d8 a2 0d 54 dc 3a f9 40 99 84 b6 57 3c"
             "59 25 81 a6 28 bf 9e 9d 95 5d 7c 8a 44 95 d7 92"
             "13 28 85 f9 7b 62 1b b6 26 2e 28 1f 8c a2 8f c5")
          
-         print (stmmessage)
+         print ("3105 Send: " + stmmessage)
          stmwriter.write(bytearray.fromhex(stmmessage))
          await stmwriter.drain()
          data = await stmreader.read(-1)
-         print(f'Received10: {bytes.hex(data)}')
-
-         # The following error is returned:
-         # <?xml version="1.0" encoding="utf-8"?>
-         # <Response>
-         #   <Result>129</Result>
-         # </Response>
+         print(f'3105 Recv: {bytes.hex(data)}')
+         # <?xml version="1.0" encoding="utf-8"?><Response><Result>129</Result></Response>
+         stmwriter.close()
+         await stmwriter.wait_closed()
 
 
+         stmreader, stmwriter = await asyncio.open_connection(self._connection['localIp'], 8000)
+         stmmessage = (
+            "00 00 00 2c 63 00 00 00  79 ce fc 2b 00 03 00 00"
+            "67 0b a8 c0 71 5f 0f bf  00 6b 9e 06 15 f7 00 00"
+            "00 00 00 01 00 00 00 00  00 00 04 01")         
+
+            # open.ys7.com ?
+
+            # 00 00 00 2c 63 00 00 00  7a ea 71 36 00 03 00 00
+            # 67 0b a8 c0 4d ab f4 69  00 6b 9e 06 15 f7 00 00
+            # 00 00 00 01 00 00 00 00  00 00 04 01
+
+            # 00 00 00 2c 63 00 00 00  17 a1 c9 98 00 03 00 00
+            # 67 0b a8 c0 10 15 c0 a7  00 6b 9e 06 15 f7 00 00
+            # 00 00 00 01 00 00 00 00  00 00 04 01   
+
+            # 22:51 05-04-2020
+            # 00 00 00 2c 63 00 00 00  79 f0 46 43 00 03 00 00
+            # 67 0b a8 c0 0f 16 b2 82  00 6b 9e 06 15 f7 00 00
+            # 00 00 00 01 00 00 00 00  00 00 04 01 
+            
+            # 22:54  05-04-2020
+            # 00 00 00 2c 63 00 00 00  48 2f 4d fe 00 03 00 00 
+            # 67 0b a8 c0 48 1c 01 a2  00 6b 9e 06 15 f7 00 00  
+            # 00 00 00 01 00 00 00 00  00 00 04 01              
+
+            # 23:21  05-04-2020 1,2,3
+            # 00 00 00 2c 63 00 00 00  ce bf f3 e5 00 03 00 00 
+            # 67 0b a8 c0 58 89 fd 0b  00 6b 9e 06 15 f7 00 00 
+            # 00 00 00 01 00 00 00 00  00 00 04 01             
+            # 00 00 00 2c 63 00 00 00  e6 b4 2c cc 00 03 00 00   
+            # 67 0b a8 c0 72 25 9b 67  00 6b 9e 06 15 f7 00 00   
+            # 00 00 00 01 00 00 00 00  00 00 04 01
+            # 00 00 00 2c 63 00 00 00  5e 3f fc 4c 00 03 00 00
+            # 67 0b a8 c0 59 8a 78 2e  00 6b 9e 06 15 f7 00 00
+            # 00 00 00 01 00 00 00 00  00 00 04 01            
+
+
+         stmwriter.write(bytearray.fromhex(stmmessage))
+         await stmwriter.drain()
+         data = await stmreader.read(-1)
+         print(f'Recv: {bytes.hex(data)}')
          stmwriter.close()
          await stmwriter.wait_closed()
          
